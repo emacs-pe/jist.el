@@ -8,31 +8,40 @@ Yet another [gist](https://gist.github.com/) client for Emacs.
 
 ### Configuration
 
-To create gists it's necessary to obtain a `oauth-token` with gist support in
-https://github.com/settings/applications.
+To create anonymous gists is not necessary any configuration, but if you want
+to create gists with your github account you need to obtain a `oauth-token`
+with gist scope in https://github.com/settings/applications, and set it
+through any of the following methods:
 
-You can use any of the following methods:
 + Add `(setq jist-github-token "mytoken")` to your `init.el`.
 + Add `oauth-token` to your `~/.gitconfig`: `git config github.oauth-token mytoken`
 
 ### Usage
 
-
-> **Warning**: By default `jist.el` the main functions `jist-region` and
-> `jist-buffer` create **anonymous** gists, to create gists with you associated account use
+> **Warning**: By default, the main functions `jist-region` and
+> `jist-buffer` create **anonymous** gists, to create gists with you configured account use
 > `jist-auth-region` and `jist-auth-buffer`.
->
-> If you want that all the creation of gists use your configured account you
-> can set the variable `jist-enable-default-authorized` to non nil.
 
-+ `jist-region` Creates a private and anonymous gist from a active region.
-+ `jist-auth-region` Creates a private gist from a active region using the configured account.
-+ `jist-region-public` Creates a public and anonymous gist from a active region.
-+ `jist-auth-region-public` Creates a public gist from a active region using the configured account.
-+ `jist-buffer` Creates a private and anonymous gist of the current buffer.
-+ `jist-auth-buffer` Creates a private gist of the current buffer using the configured account.
-+ `jist-buffer-public` Creates a private and anonymous gist of the current buffer.
-+ `jist-auth-buffer-public` to create a public jist using the configured account.
++ Create a gist from an active region:
+
+                          | public | anonymous
+------------------------- | ------ | ---------
+`jist-auth-region`        |        |
+`jist-auth-region-public` | x      |
+`jist-region`             |        | x
+`jist-region-public`      | x      | x
+
++ Create a gist of the contents of the current buffer:
+
+                          | public | anonymous
+------------------------- | ------ | ---------
+`jist-auth-buffer`        |        |
+`jist-auth-buffer-public` | x      |
+`jist-buffer`             |        | x
+`jist-buffer-public`      | x      | x
+
+You can set the variable `jist-enable-default-authorized` to non nil to
+always use your configured account when creating gists.
 
 ### TODO
 
@@ -77,6 +86,34 @@ Create a json from FILES alist.
 
 Create a jist name based in BUFFER name.
 
+#### `(jist-auth-region)`
+
+Create an authorized gist from an active region.
+
+#### `(jist-region-public)`
+
+Create a public gist from an active region.
+
+#### `(jist-auth-region-public)`
+
+Create a public and authorized gist from an active region.
+
+#### `(jist-buffer)`
+
+Create a gist from the contents of the current buffer.
+
+#### `(jist-auth-buffer)`
+
+Create an authorized gist from the contents of the current buffer.
+
+#### `(jist-buffer-public)`
+
+Create a public gist from the contents of the current buffer.
+
+#### `(jist-auth-buffer-public)`
+
+Create an authorized and public gist from the contents of the current buffer.
+
 #### `(jist-delete-gist ID)`
 
 Delete gist with ID.
@@ -110,6 +147,18 @@ Given a api reponse DATA of a single gist return an item.
 Return a table entry from a ITEM.
 
 Where ITEM is a cons cell `(id . jist-gist)`.
+
+#### `(jist-list-user USER)`
+
+Show a list of gist of a github USER.
+
+#### `(jist-list-public)`
+
+Show a list of public gists.
+
+#### `(jist-list-starred)`
+
+Show a list of starred gists of the configured user.
 
 -----
 <div style="padding-top:15px;color: #d0d0d0;">

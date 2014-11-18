@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((magit "20141005.643") (request "0.2.0"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (magit "1.2.1") (request "0.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -31,30 +31,39 @@
 ;; Yet another [gist](https://gist.github.com/) client for Emacs.
 
 ;;; Configuration:
-;; To create gists it's necessary to obtain a `oauth-token` with gist support in
-;; https://github.com/settings/applications.
+;; To create anonymous gists is not necessary any configuration, but if you want
+;; to create gists with your github account you need to obtain a `oauth-token`
+;; with gist scope in https://github.com/settings/applications, and set it
+;; through any of the following methods:
 ;;
-;; You can use any of the following methods:
 ;; + Add `(setq jist-github-token "mytoken")` to your `init.el`.
 ;; + Add `oauth-token` to your `~/.gitconfig`: `git config github.oauth-token mytoken`
 
 ;;; Usage:
-;;
-;; > **Warning**: By default `jist.el' the main functions `jist-region' and
-;; > `jist-buffer' create **anonymous** gists, to create gists with you associated account use
+;; > **Warning**: By default, the main functions `jist-region' and
+;; > `jist-buffer' create **anonymous** gists, to create gists with you configured account use
 ;; > `jist-auth-region' and `jist-auth-buffer'.
-;; >
-;; > If you want that all the creation of gists use your configured account you
-;; > can set the variable `jist-enable-default-authorized' to non nil.
 ;;
-;; + `jist-region' Creates a private and anonymous gist from a active region.
-;; + `jist-auth-region' Creates a private gist from a active region using the configured account.
-;; + `jist-region-public' Creates a public and anonymous gist from a active region.
-;; + `jist-auth-region-public' Creates a public gist from a active region using the configured account.
-;; + `jist-buffer' Creates a private and anonymous gist of the current buffer.
-;; + `jist-auth-buffer' Creates a private gist of the current buffer using the configured account.
-;; + `jist-buffer-public' Creates a private and anonymous gist of the current buffer.
-;; + `jist-auth-buffer-public' to create a public jist using the configured account.
+;; + Create a gist from an active region:
+;;
+;;                           | public | anonymous
+;; ------------------------- | ------ | ---------
+;; `jist-auth-region'        |        |
+;; `jist-auth-region-public' | x      |
+;; `jist-region'             |        | x
+;; `jist-region-public'      | x      | x
+;;
+;; + Create a gist of the contents of the current buffer:
+;;
+;;                           | public | anonymous
+;; ------------------------- | ------ | ---------
+;; `jist-auth-buffer'        |        |
+;; `jist-auth-buffer-public' | x      |
+;; `jist-buffer'             |        | x
+;; `jist-buffer-public'      | x      | x
+;;
+;; You can set the variable `jist-enable-default-authorized' to non nil to
+;; always use your configured account when creating gists.
 
 ;;; TODO:
 ;; + [ ] Add pagination support with rfc5988 link headers. See:
@@ -270,14 +279,47 @@ When PUBLIC is not nil creates a public gist."
                                        (kill-new gist-url)
                                        (message "Gist '%s' created" gist-url)))))))
 
-(defalias #'jist-auth-region #'(lambda () (interactive) (funcall (apply-partially 'jist-region :authorized t))))
-(defalias #'jist-region-public #'(lambda () (interactive) (funcall (apply-partially 'jist-region :public t))))
-(defalias #'jist-auth-region-public #'(lambda () (interactive) (funcall (apply-partially 'jist-region :public t :authorized t))))
+;;;###autoload
+(defun jist-auth-region ()
+  "Create an authorized gist from an active region."
+  (interactive)
+  (jist-region :authorized t))
 
-(defalias #'jist-buffer #'(lambda () (interactive) (funcall 'jist-region :beg (point-min) :end (point-max))))
-(defalias #'jist-auth-buffer #'(lambda () (interactive) (funcall 'jist-region :beg (point-min) :end (point-max) :authorized t)))
-(defalias #'jist-buffer-public #'(lambda () (interactive) (funcall 'jist-region :beg (point-min) :end (point-max) :public t)))
-(defalias #'jist-auth-buffer-public #'(lambda () (interactive) (funcall 'jist-region :beg (point-min) :end (point-max) :public t :authorized t)))
+;;;###autoload
+(defun jist-region-public ()
+  "Create a public gist from an active region."
+  (interactive)
+  (jist-region :public t))
+
+;;;###autoload
+(defun jist-auth-region-public ()
+  "Create a public and authorized gist from an active region."
+  (interactive)
+  (jist-region :public t :authorized t))
+
+;;;###autoload
+(defun jist-buffer ()
+  "Create a gist from the contents of the current buffer."
+  (interactive)
+  (jist-region :beg (point-min) :end (point-max)))
+
+;;;###autoload
+(defun jist-auth-buffer ()
+  "Create an authorized gist from the contents of the current buffer."
+  (interactive)
+  (jist-region :beg (point-min) :end (point-max) :authorized t))
+
+;;;###autoload
+(defun jist-buffer-public ()
+  "Create a public gist from the contents of the current buffer."
+  (interactive)
+  (jist-region :beg (point-min) :end (point-max) :public t))
+
+;;;###autoload
+(defun jist-auth-buffer-public ()
+  "Create an authorized and public gist from the contents of the current buffer."
+  (interactive)
+  (jist-region :beg (point-min) :end (point-max) :public t :authorized t))
 
 (defun jist-read-gist-id ()
   (list (ido-completing-read "Gist id: "
@@ -286,8 +328,6 @@ When PUBLIC is not nil creates a public gist."
                              (and (tabulated-list-get-id)
                                   (symbol-name (tabulated-list-get-id))))))
 
-;; TODO: `request.el' calls the `error-callback' when status code == 204 and
-;; Content-Length == 0 with `error-thrown' equal to "(end-of-file)"
 ;;;###autoload
 (defun jist-delete-gist (id)
   "Delete gist with ID."
@@ -453,9 +493,23 @@ Where ITEM is a cons cell `(id . jist-gist)`."
       (tabulated-list-print)
       (pop-to-buffer (current-buffer)))))
 
-(defalias #'jist-list-user #'(lambda () (interactive) (funcall (apply-partially #'jist-list :user (read-string "username: ")))))
-(defalias #'jist-list-public #'(lambda () (interactive) (funcall (apply-partially #'jist-list :public t))))
-(defalias #'jist-list-starred #'(lambda () (interactive) (funcall (apply-partially #'jist-list :starred t))))
+;;;###autoload
+(defun jist-list-user (user)
+  "Show a list of gist of a github USER."
+  (interactive (list (read-string "username: ")))
+  (jist-list :user user))
+
+;;;###autoload
+(defun jist-list-public ()
+  "Show a list of public gists."
+  (interactive)
+  (jist-list :public t))
+
+;;;###autoload
+(defun jist-list-starred ()
+  "Show a list of starred gists of the configured user."
+  (interactive)
+  (jist-list :starred t))
 
 (provide 'jist)
 
