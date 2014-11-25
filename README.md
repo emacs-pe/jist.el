@@ -74,10 +74,6 @@ Return a github absolure url of an ENDPOINT.
 
 Generate authorization header.
 
-#### `(jist-repository-gist-p)`
-
-Check if the current repository is a gist.
-
 #### `(jist-create-gist-data FILES &optional DESCRIPTION PUBLIC)`
 
 Create a json from FILES alist.
@@ -114,9 +110,17 @@ Create a public gist from the contents of the current buffer.
 
 Create an authorized and public gist from the contents of the current buffer.
 
+#### `(jist-read-gist-id)`
+
+Read gist id.
+
 #### `(jist-delete-gist ID)`
 
 Delete gist with ID.
+
+#### `(jist-browse-gist ID)`
+
+Show a gist with ID in a browser.
 
 #### `(jist-star-gist ID)`
 
@@ -129,10 +133,6 @@ Unstar a gist ID.
 #### `(jist-clone-gist ID)`
 
 Close gist ID.
-
-#### `(jist-gist-from-id ID)`
-
-Call synchronously the github api to create a `jist-gist` struct from a gist ID.
 
 #### `(jist-generate-table-entries BUFFER)`
 

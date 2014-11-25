@@ -229,12 +229,6 @@
         (insert "\n" raw-header)
         (comment-region hstart (point))))))
 
-(defun jist-repository-gist-p ()
-  "Check if the current repository is a gist."
-  (let* ((url (magit-get "remote" "origin" "url"))
-         (urlobj (url-generic-parse-url url)))
-    (string= (url-host urlobj) "gist.github.com")))
-
 (defun jist-create-gist-data (files &optional description public)
   "Create a json from FILES alist."
   (let ((public (or public json-false))
@@ -322,11 +316,13 @@ When PUBLIC is not nil creates a public gist."
   (jist-region :beg (point-min) :end (point-max) :public t :authorized t))
 
 (defun jist-read-gist-id ()
-  (list (ido-completing-read "Gist id: "
-                             (mapcar #'(lambda (e) (symbol-name (car e))) jist-gists)
-                             nil nil nil nil
-                             (and (tabulated-list-get-id)
-                                  (symbol-name (tabulated-list-get-id))))))
+  "Read gist id."
+  (list (if (and (eq major-mode 'jist-gist-list-mode) (tabulated-list-get-id))
+            (symbol-name (tabulated-list-get-id))
+          (ido-completing-read "Gist id: "
+                               (mapcar #'(lambda (e) (symbol-name (car e))) jist-gists)
+                               nil nil nil nil
+                               (tabulated-list-get-id)))))
 
 ;;;###autoload
 (defun jist-delete-gist (id)
@@ -334,19 +330,23 @@ When PUBLIC is not nil creates a public gist."
   (interactive (jist-read-gist-id))
   (let* ((id (if (stringp id) (intern id) id))
          (gist (cdr-safe (assq id jist-gists)))
-         (desc (and gist (jist-gist-description gist)))
-         (buffer (current-buffer)))
+         (desc (and gist (jist-gist-description gist))))
     (when (or jist-disable-asking
               (y-or-n-p (format "Do you really want to delete gist %s: '%s'" id (or desc ""))))
       (jist-github-request (format "/gists/%s" id)
                            :type "DELETE"
                            :authorized t
-                           :status-code '((204 . (lambda (&rest _)
-                                                   (message "Gist deleted"))))
+                           :status-code '((204 . (lambda (&rest _) (message "Gist deleted"))))
                            :success nil
                            :error (function*
                                    (lambda (&key data error-thrown &allow-other-keys)
                                      (message "Error: %s" error-thrown)))))))
+
+;;;###autoload
+(defun jist-browse-gist (id)
+  "Show a gist with ID in a browser."
+  (interactive (jist-read-gist-id))
+  (browse-url (format "https://gist.github.com/%s" id)))
 
 ;;;###autoload
 (defun jist-star-gist (id)
@@ -355,22 +355,21 @@ When PUBLIC is not nil creates a public gist."
   (jist-github-request (format "/gists/%s/star" id)
                        :type "PUT"
                        :authorized t
-                       :status-code '((204 . (lambda (&rest _)
-                                               (message "Gist starred"))))
+                       :status-code '((204 . (lambda (&rest _) (message "Gist starred"))))
                        :headers '(("Content-Length" . "0"))
                        :success nil
                        :error (function*
                                (lambda (&key error-thrown &allow-other-keys)
                                  (message "Error: %s" error-thrown)))))
 
+;;;###autoload
 (defun jist-unstar-gist (id)
   "Unstar a gist ID."
   (interactive (jist-read-gist-id))
   (jist-github-request (format "/gists/%s/star" id)
                        :type "DELETE"
                        :authorized t
-                       :status-code '((204 . (lambda (&rest _)
-                                               (message "Gist unstarred"))))
+                       :status-code '((204 . (lambda (&rest _) (message "Gist unstarred"))))
                        :success nil
                        :error (function*
                                (lambda (&key error-thrown &allow-other-keys)
@@ -394,15 +393,6 @@ When PUBLIC is not nil creates a public gist."
                                      (magit-call-git "clone" pull-url directory)
                                      (find-file directory))))))
 
-(defun jist-gist-from-id (id)
-  "Call synchronously the github api to create a `jist-gist' struct from a gist ID."
-  (jist-gist-create (request-response-data
-                     (jist-github-request (format "/gists/%s" id)
-                                          :type "GET"
-                                          :parser 'json-read
-                                          :success nil
-                                          :sync t))))
-
 (defun jist-generate-table-entries (buffer)
   "Generate tabulated mode entries of a BUFFER."
   (mapcar #'jist-generate-table-entry (jist-gists buffer)))
@@ -422,22 +412,36 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                      (or (jist-gist-description gist) "")
                      (jist-gist-html_url gist)))))
 
-(define-derived-mode jist-mode tabulated-list-mode "Jist List"
-  "List gists."
-  (setq tabulated-list-format [("id" 20 nil) ("public" 6 nil) ("description" 60 nil) ("http_url" 60 nil)])
+(defvar jist-gist-list-mode-map
+  (let ((map (make-keymap)))
+    (define-key map (kbd "O") 'jist-browse-gist)
+    (define-key map (kbd "C") 'jist-clone-gist)
+    (define-key map (kbd "S") 'jist-star-gist)
+    (define-key map (kbd "U") 'jist-unstar-gist)
+    (define-key map (kbd "D") 'jist-delete-gist)
+    map)
+  "Keymap for jist-gist-list-mode.")
 
-  (define-key jist-mode-map (kbd "O") #'(lambda () (interactive) (browse-url (elt (tabulated-list-get-entry) 3))))
-  (define-key jist-mode-map (kbd "C") #'(lambda () (interactive) (jist-clone-gist (tabulated-list-get-id))))
-  (define-key jist-mode-map (kbd "D") #'(lambda () (interactive) (jist-delete-gist (tabulated-list-get-id))))
-  (define-key jist-mode-map (kbd "S") #'(lambda () (interactive) (jist-star-gist (tabulated-list-get-id))))
-  (define-key jist-mode-map (kbd "U") #'(lambda () (interactive) (jist-unstar-gist (tabulated-list-get-id))))
-  (define-key jist-mode-map (kbd "R") #'(lambda () (interactive)
-                                          (setq jist-gists-already-fetched nil)
-                                          (jist-gists (current-buffer)
-                                                      :user jist-gists-user
-                                                      :public jist-gists-public
-                                                      :starred jist-gists-starred)))
+(define-derived-mode jist-gist-list-mode tabulated-list-mode "Jist List"
+  "List gists.
+
+\\{jist-gist-list-mode-map}"
+  (setq tabulated-list-format [("id" 20 nil)
+                               ("public" 6 nil)
+                               ("description" 60 nil)
+                               ("http_url" 60 nil)])
+  (add-hook 'tabulated-list-revert-hook #'jist-refetch-gists nil t)
   (tabulated-list-init-header))
+
+;;;###autoload
+(defun jist-refetch-gists ()
+  (interactive)
+  (when (eq major-mode 'jist-gist-list-mode)
+    (setq jist-gists-already-fetched nil)
+    (jist-gists (current-buffer)
+                :user jist-gists-user
+                :public jist-gists-public
+                :starred jist-gists-starred)))
 
 (defun* jist-gists (buffer
                     &key
@@ -466,11 +470,12 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                             :authorized authorized
                                             :success (function*
                                                       (lambda (&key data &allow-other-keys)
-                                                        (setq jist-gists-already-fetched t)
+                                                        (message "jist request complete")
                                                         (with-current-buffer buffer
-                                                          (setq jist-gists (mapcar #'jist-item-from-response data))
-                                                          (setq tabulated-list-entries (jist-generate-table-entries buffer))
-                                                          (tabulated-list-revert)))))))))))
+                                                          (setq jist-gists-already-fetched t
+                                                                jist-gists (mapcar #'jist-item-from-response data)
+                                                                tabulated-list-entries (jist-generate-table-entries buffer))
+                                                          (tabulated-list-print t)))))))))))
 
 ;;;###autoload
 (defun* jist-list (&key
@@ -485,12 +490,11 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                         (t jist-buffer-name)))
          (buffer (get-buffer-create bufname)))
     (with-current-buffer buffer
-      (jist-mode)
-      (setq jist-gists-user user)
-      (setq jist-gists-public public)
-      (setq jist-gists-starred starred)
+      (jist-gist-list-mode)
+      (setq jist-gists-user user
+            jist-gists-public public
+            jist-gists-starred starred)
       (jist-gists buffer :user user :public public :starred starred)
-      (tabulated-list-print)
       (pop-to-buffer (current-buffer)))))
 
 ;;;###autoload
