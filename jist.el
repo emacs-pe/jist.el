@@ -183,20 +183,20 @@
   `(("Accept" . "application/vnd.github.v3+json")
     ("User-Agent" . ,(format "jist.el/%s Emacs gist client" jist-version))))
 
-(defun* jist-github-request (endpoint
-                             &key
-                             (type "GET")
-                             (params nil)
-                             (data nil)
-                             (files nil)
-                             (parser 'buffer-string)
-                             (error 'jist-default-callback)
-                             (success 'jist-default-callback)
-                             (headers jist-default-headers)
-                             (timeout nil)
-                             (sync nil)
-                             (status-code nil)
-                             (authorized nil))
+(cl-defun jist-github-request (endpoint
+                               &key
+                               (type "GET")
+                               (params nil)
+                               (data nil)
+                               (files nil)
+                               (parser 'buffer-string)
+                               (error 'jist-default-callback)
+                               (success 'jist-default-callback)
+                               (headers jist-default-headers)
+                               (timeout nil)
+                               (sync nil)
+                               (status-code nil)
+                               (authorized nil))
   "Process a request to a github api endpoint."
   (when authorized
     (setq headers (append headers
@@ -215,7 +215,7 @@
            :files files
            :sync sync))
 
-(defun* jist-default-callback (&key data response error-thrown &allow-other-keys)
+(cl-defun jist-default-callback (&key data response error-thrown &allow-other-keys)
   (with-current-buffer (get-buffer-create jist-debug-buffer-name)
     (erase-buffer)
     (when error-thrown
@@ -248,11 +248,11 @@
       filename)))
 
 ;;;###autoload
-(defun* jist-region (&key
-                     (beg (and (use-region-p) (region-beginning)))
-                     (end (and (use-region-p) (region-end)))
-                     (public nil)
-                     (authorized nil))
+(cl-defun jist-region (&key
+                       (beg (and (use-region-p) (region-beginning)))
+                       (end (and (use-region-p) (region-end)))
+                       (public nil)
+                       (authorized nil))
   "Create a private gist from BEG and END region.
 
 When PUBLIC is not nil creates a public gist."
@@ -267,7 +267,7 @@ When PUBLIC is not nil creates a public gist."
                          :data data
                          :parser 'json-read
                          :authorized (or authorized jist-enable-default-authorized)
-                         :success (function*
+                         :success (cl-function
                                    (lambda (&key data  &allow-other-keys)
                                      (let ((gist-url (cdr (assq 'html_url data))))
                                        (kill-new gist-url)
@@ -319,10 +319,10 @@ When PUBLIC is not nil creates a public gist."
   "Read gist id."
   (list (if (and (eq major-mode 'jist-gist-list-mode) (tabulated-list-get-id))
             (symbol-name (tabulated-list-get-id))
-          (ido-completing-read "Gist id: "
-                               (mapcar #'(lambda (e) (symbol-name (car e))) jist-gists)
-                               nil nil nil nil
-                               (tabulated-list-get-id)))))
+          (completing-read "Gist id: "
+                           (mapcar #'(lambda (e) (symbol-name (car e))) jist-gists)
+                           nil nil nil nil
+                           (tabulated-list-get-id)))))
 
 ;;;###autoload
 (defun jist-delete-gist (id)
@@ -338,8 +338,8 @@ When PUBLIC is not nil creates a public gist."
                            :authorized t
                            :status-code '((204 . (lambda (&rest _) (message "Gist deleted"))))
                            :success nil
-                           :error (function*
-                                   (lambda (&key data error-thrown &allow-other-keys)
+                           :error (cl-function
+                                   (lambda (&key error-thrown &allow-other-keys)
                                      (message "Error: %s" error-thrown)))))))
 
 ;;;###autoload
@@ -358,7 +358,7 @@ When PUBLIC is not nil creates a public gist."
                        :status-code '((204 . (lambda (&rest _) (message "Gist starred"))))
                        :headers '(("Content-Length" . "0"))
                        :success nil
-                       :error (function*
+                       :error (cl-function
                                (lambda (&key error-thrown &allow-other-keys)
                                  (message "Error: %s" error-thrown)))))
 
@@ -371,7 +371,7 @@ When PUBLIC is not nil creates a public gist."
                        :authorized t
                        :status-code '((204 . (lambda (&rest _) (message "Gist unstarred"))))
                        :success nil
-                       :error (function*
+                       :error (cl-function
                                (lambda (&key error-thrown &allow-other-keys)
                                  (message "Error: %s" error-thrown)))))
 
@@ -383,7 +383,7 @@ When PUBLIC is not nil creates a public gist."
                        :type "GET"
                        :parser 'json-read
                        :authorized t
-                       :success (function*
+                       :success (cl-function
                                  (lambda (&key data &allow-other-keys)
                                    (let* ((id (cdr-safe (assq 'id data)))
                                           (pull-url (cdr-safe (assq 'git_pull_url data)))
@@ -443,14 +443,14 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                 :public jist-gists-public
                 :starred jist-gists-starred)))
 
-(defun* jist-gists (buffer
-                    &key
-                    (user nil)
-                    (public nil)
-                    (starred nil)
-                    (since nil)
-                    (page nil)
-                    (per-page jist-default-per-page))
+(cl-defun jist-gists (buffer
+                      &key
+                      (user nil)
+                      (public nil)
+                      (starred nil)
+                      (since nil)
+                      (page nil)
+                      (per-page jist-default-per-page))
   "Fetch a `jist-gists' list of gists."
   (with-current-buffer buffer
     (if jist-gists-already-fetched
@@ -468,7 +468,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                             :parser 'json-read
                                             :params params
                                             :authorized authorized
-                                            :success (function*
+                                            :success (cl-function
                                                       (lambda (&key data &allow-other-keys)
                                                         (message "jist request complete")
                                                         (with-current-buffer buffer
@@ -478,10 +478,10 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                                           (tabulated-list-print t)))))))))))
 
 ;;;###autoload
-(defun* jist-list (&key
-                   (user nil)
-                   (public nil)
-                   (starred nil))
+(cl-defun jist-list (&key
+                     (user nil)
+                     (public nil)
+                     (starred nil))
   "Show the list of gists."
   (interactive)
   (let* ((bufname (cond (user (format "*%s-gists*" user))
