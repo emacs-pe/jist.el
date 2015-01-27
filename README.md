@@ -4,44 +4,64 @@
 ---
 [![Travis build status](https://travis-ci.org/emacs-pe/jist.el.png?branch=master)](https://travis-ci.org/emacs-pe/jist.el)
 
-Yet another [gist](https://gist.github.com/) client for Emacs.
+Yet another [gist][] client for Emacs.
+
+### Features
+
++ Allows to create gists.
++ Allows to delete/clone/star/unstar a gist.
++ List your owned/starred gists.
++ List public gists.
++ List public gists from another github user.
 
 ### Configuration
 
-To create anonymous gists is not necessary any configuration, but if you want
-to create gists with your github account you need to obtain a `oauth-token`
-with gist scope in https://github.com/settings/applications, and set it
-through any of the following methods:
+To create anonymous gists is not necessary any configuration, but
+if you want to create gists with your github account you need to
+obtain a `oauth-token` with gist scope in
+https://github.com/settings/applications, and set it through any of
+the following methods:
 
 + Add `(setq jist-github-token "mytoken")` to your `init.el`.
 + Add `oauth-token` to your `~/.gitconfig`: `git config github.oauth-token mytoken`
 
 ### Usage
 
-> **Warning**: By default, the main functions `jist-region` and
-> `jist-buffer` create **anonymous** gists, to create gists with you configured account use
-> `jist-auth-region` and `jist-auth-buffer`.
+> **Warning**: By default, the functions `jist-region` and
+> `jist-buffer` create **anonymous** gists. To create gists with
+> you configured account use `jist-auth-region` and
+> `jist-auth-buffer`.
 
 + Create a gist from an active region:
 
-                          | public | anonymous
-------------------------- | ------ | ---------
-`jist-auth-region`        |        |
-`jist-auth-region-public` | x      |
-`jist-region`             |        | x
-`jist-region-public`      | x      | x
+                            | public | anonymous
+  ------------------------- | ------ | ---------
+  `jist-auth-region`        |        |
+  `jist-auth-region-public` | x      |
+  `jist-region`             |        | x
+  `jist-region-public`      | x      | x
 
 + Create a gist of the contents of the current buffer:
 
-                          | public | anonymous
-------------------------- | ------ | ---------
-`jist-auth-buffer`        |        |
-`jist-auth-buffer-public` | x      |
-`jist-buffer`             |        | x
-`jist-buffer-public`      | x      | x
+                            | public | anonymous
+  ------------------------- | ------ | ---------
+  `jist-auth-buffer`        |        |
+  `jist-auth-buffer-public` | x      |
+  `jist-buffer`             |        | x
+  `jist-buffer-public`      | x      | x
 
 You can set the variable `jist-enable-default-authorized` to non nil to
 always use your configured account when creating gists.
+
+### Tips
+
++ In the current gist API the values of `gist_pull_url` and
+  `git_push_url` use the HTTP protocol, but it's inconvenient to
+  use the HTTP for pushes. To use the SSH protocol for pushes in
+  cloned gists you need to add the following to your git-config(1)
+
+        [url "git@gist.github.com:/"]
+            pushInsteadOf = "https://gist.github.com/"
 
 ### TODO
 
@@ -55,32 +75,11 @@ always use your configured account when creating gists.
 + [gist.el](https://github.com/defunkt/gist.el)
 + [yagist.el](https://github.com/mhayashi1120/yagist.el)
 
+[gist]: https://gist.github.com/
+[magit]: https://magit.github.io/
+
 ### Function Documentation
 
-
-#### `(jist-gist-create DATA)`
-
-Create a `jist-gist` struct from an api response DATA.
-
-#### `(jist-oauth-token)`
-
-Return the configured github token.
-
-#### `(jist-github-endpoint ENDPOINT)`
-
-Return a github absolure url of an ENDPOINT.
-
-#### `(jist-authorization-header-alist)`
-
-Generate authorization header.
-
-#### `(jist-create-gist-data FILES &optional DESCRIPTION PUBLIC)`
-
-Create a json from FILES alist.
-
-#### `(jist-file-name &optional BUFFER)`
-
-Create a jist name based in BUFFER name.
 
 #### `(jist-auth-region)`
 
@@ -110,10 +109,6 @@ Create a public gist from the contents of the current buffer.
 
 Create an authorized and public gist from the contents of the current buffer.
 
-#### `(jist-read-gist-id)`
-
-Read gist id.
-
 #### `(jist-delete-gist ID)`
 
 Delete gist with ID.
@@ -134,19 +129,9 @@ Unstar a gist ID.
 
 Close gist ID.
 
-#### `(jist-generate-table-entries BUFFER)`
+#### `(jist-refetch-gists)`
 
-Generate tabulated mode entries of a BUFFER.
-
-#### `(jist-item-from-response DATA)`
-
-Given a api reponse DATA of a single gist return an item.
-
-#### `(jist-generate-table-entry ITEM)`
-
-Return a table entry from a ITEM.
-
-Where ITEM is a cons cell `(id . jist-gist)`.
+Refetch the gists of a jist-list-mode buffer.
 
 #### `(jist-list-user USER)`
 

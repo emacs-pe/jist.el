@@ -17,5 +17,4 @@ case "$EMACS" in
     ;;
 esac
 
-wget -O - https://github.com/cask/cask/archive/master.tar.gz | tar -xvz
-make EMACS="$EMACS" CASK="cask-master/bin/cask"
+curl -fsSkL https://raw.github.com/cask/cask/master/go | python
