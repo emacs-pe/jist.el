@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24") (cl-lib "0.5") (magit "1.2.1") (request "0.2.0"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (magit "1.2.1") (request "0.2.0") (pkg-info "0.4"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -97,6 +97,7 @@
 ;; [magit]: https://magit.github.io/
 
 ;;; Code:
+(declare-function pkg-info-version-info "pkg-info" (library))
 
 (eval-when-compile (require 'cl-lib))
 
@@ -142,9 +143,6 @@
   "Disable asking before destructive operations."
   :type 'boolean
   :group 'jist)
-
-(defconst jist-version "0.0.1"
-  "Jist version.")
 
 (defconst jist-github-api-baseurl "https://api.github.com"
   "Base url for the github api.")
@@ -198,7 +196,7 @@
 
 (defconst jist-default-headers
   `(("Accept" . "application/vnd.github.v3+json")
-    ("User-Agent" . ,(format "jist.el/%s Emacs gist client" jist-version))))
+    ("User-Agent" . ,(format "jist.el/%s" (pkg-info-version-info 'jist)))))
 
 (cl-defun jist-github-request (endpoint
                                &key
@@ -273,7 +271,7 @@
 When PUBLIC is not nil creates a public gist."
   (interactive)
   (unless (and beg end)
-    (error "No region selected."))
+    (error "No region selected"))
   (let* ((description (read-string "Description: "))
          (files `((,(jist--file-name) . ,(buffer-substring-no-properties beg end))))
          (data (jist--create-gist-data files description public)))
@@ -284,7 +282,7 @@ When PUBLIC is not nil creates a public gist."
                          :authorized (or authorized jist-enable-default-authorized)
                          :success (cl-function
                                    (lambda (&key data  &allow-other-keys)
-                                     (let ((gist-url (cdr (assq 'html_url data))))
+                                     (let ((gist-url (assoc-default 'html_url data)))
                                        (kill-new gist-url)
                                        (message "Gist '%s' created" gist-url)))))))
 
@@ -333,9 +331,9 @@ When PUBLIC is not nil creates a public gist."
 (defun jist--read-gist-id ()
   "Read gist id."
   (list (if (and (eq major-mode 'jist-gist-list-mode) (tabulated-list-get-id))
-            (symbol-name (tabulated-list-get-id))
+            (tabulated-list-get-id)
           (completing-read "Gist id: "
-                           (mapcar (lambda (e) (symbol-name (car e))) jist-gists)
+                           jist-gists
                            nil nil nil nil
                            (tabulated-list-get-id)))))
 
@@ -343,11 +341,10 @@ When PUBLIC is not nil creates a public gist."
 (defun jist-delete-gist (id)
   "Delete gist with ID."
   (interactive (jist--read-gist-id))
-  (let* ((id (if (stringp id) (intern id) id))
-         (gist (cdr-safe (assq id jist-gists)))
+  (let* ((gist (assoc-default id jist-gists))
          (desc (and gist (jist-gist-description gist))))
     (when (or jist-disable-asking
-              (y-or-n-p (format "Do you really want to delete gist %s: '%s'" id (or desc ""))))
+              (y-or-n-p (format "Do you really want to delete gist %s: \"%s\"? " id (or desc ""))))
       (jist-github-request (format "/gists/%s" id)
                            :type "DELETE"
                            :authorized t
@@ -400,8 +397,8 @@ When PUBLIC is not nil creates a public gist."
                        :authorized t
                        :success (cl-function
                                  (lambda (&key data &allow-other-keys)
-                                   (let* ((id (cdr-safe (assq 'id data)))
-                                          (pull-url (cdr-safe (assq 'git_pull_url data)))
+                                   (let* ((id (assoc-default 'id data))
+                                          (pull-url (assoc-default 'git_pull_url data))
                                           (directory (expand-file-name id jist-gist-directory)))
                                      (message "Cloning %s in %s" pull-url directory)
                                      (magit-call-git "clone" pull-url directory)
@@ -413,7 +410,7 @@ When PUBLIC is not nil creates a public gist."
 
 (defun jist--item-from-response (data)
   "Given a api reponse DATA of a single gist return an item."
-  (cons (intern (cdr-safe (assq 'id data)))
+  (cons (assoc-default 'id data)
         (jist--gist-create data)))
 
 (defun jist--generate-table-entry (item)

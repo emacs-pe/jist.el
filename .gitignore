@@ -1,5 +1,4 @@
 *~
 *.elc
 .cask
-elpa
-make-readme-markdown.el
+el2markdown.el
