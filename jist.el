@@ -102,7 +102,7 @@
 (eval-when-compile (require 'cl-lib))
 
 (require 'json)
-(require 'url-util)
+(require 'url-expand)
 
 (require 'magit)
 (require 'request)
@@ -188,12 +188,6 @@
       (magit-get "github" "oauth-token")
       (error "You need to generate a personal access token.  https://github.com/settings/applications")))
 
-(defun jist--github-endpoint (endpoint)
-  "Return a github absolure url of an ENDPOINT."
-  (let ((urlobj (url-generic-parse-url jist-github-api-baseurl)))
-    (setf (url-filename urlobj) endpoint)
-    (url-recreate-url urlobj)))
-
 (defconst jist-default-headers
   `(("Accept" . "application/vnd.github.v3+json")
     ("User-Agent" . ,(format "jist.el/%s" (pkg-info-version-info 'jist)))))
@@ -216,7 +210,7 @@
   (when authorized
     (setq headers (append headers
                           `(("Authorization". ,(format "Bearer %s" (jist--oauth-token)))))))
-  (request (jist--github-endpoint endpoint)
+  (request (url-expand-file-name endpoint jist-github-api-baseurl)
            :type type
            :data data
            :params params
