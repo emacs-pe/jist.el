@@ -1,4 +1,4 @@
-;;; jist.el --- Manage gists from emacs -*- lexical-binding: t; -*-
+;;; jist.el --- Manage gists from Emacs -*- lexical-binding: t; -*-
 
 ;; Copyright © 2014 Mario Rodas <marsam@users.noreply.github.com>
 
@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24") (cl-lib "0.5") (magit "1.2.1") (request "0.2.0") (pkg-info "0.4"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (magit "2.1.0") (request "0.2.0") (pkg-info "0.4"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -395,8 +395,7 @@ When PUBLIC is not nil creates a public gist."
                                           (pull-url (assoc-default 'git_pull_url data))
                                           (directory (expand-file-name id jist-gist-directory)))
                                      (message "Cloning %s in %s" pull-url directory)
-                                     (magit-call-git "clone" pull-url directory)
-                                     (find-file directory))))))
+                                     (magit-run-git-async "clone" pull-url directory))))))
 
 (defun jist--generate-table-entries (buffer)
   "Generate tabulated mode entries of a BUFFER."
