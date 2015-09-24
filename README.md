@@ -1,8 +1,10 @@
 ## jist.el
-*Manage gists from emacs -*- lexical-binding: t; -*-*
+*Manage gists from Emacs -*- lexical-binding: t; -*-*
 
 ---
-[![Travis build status](https://travis-ci.org/emacs-pe/jist.el.png?branch=master)](https://travis-ci.org/emacs-pe/jist.el)
+[![License GPLv3](https://img.shields.io/badge/license-GPL_v3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
+[![Build Status](https://travis-ci.org/emacs-pe/jist.el.svg?branch=master)](https://travis-ci.org/emacs-pe/jist.el)
+[![MELPA](http://melpa.org/packages/jist-badge.svg)](http://melpa.org/#/jist)
 
 Yet another [gist][] client for Emacs.
 
