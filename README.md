@@ -1,14 +1,14 @@
 ## jist.el
-*Manage gists from Emacs -*- lexical-binding: t; -*-*
+*Manage gists from Emacs      -*- lexical-binding: t; -*-*
 
 ---
 [![License GPLv3](https://img.shields.io/badge/license-GPL_v3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
 [![Build Status](https://travis-ci.org/emacs-pe/jist.el.svg?branch=master)](https://travis-ci.org/emacs-pe/jist.el)
 [![MELPA](http://melpa.org/packages/jist-badge.svg)](http://melpa.org/#/jist)
 
-Yet another [gist][] client for Emacs.
+Yet another [Gist][] client for Emacs.
 
-### Features
+Features:
 
 + Allows to create gists.
 + Allows to delete/clone/star/unstar a gist.
@@ -16,23 +16,21 @@ Yet another [gist][] client for Emacs.
 + List public gists.
 + List public gists from another github user.
 
-### Configuration
+Configuration:
 
-To create anonymous gists is not necessary any configuration, but
-if you want to create gists with your github account you need to
-obtain a `oauth-token` with gist scope in
-https://github.com/settings/applications, and set it through any of
-the following methods:
+To create anonymous gists is not necessary any configuration, but if you want
+to create gists with your github account you need to obtain a `oauth-token`
+with gist scope in https://github.com/settings/applications, and set it
+through any of the following methods:
 
-+ Add `(setq jist-github-token "mytoken")` to your `init.el`.
-+ Add `oauth-token` to your `~/.gitconfig`: `git config github.oauth-token mytoken`
++ Add `(setq jist-github-token "TOKEN")` to your `init.el`.
++ Add `oauth-token` to your `~/.gitconfig`: `git config --global github.oauth-token MYTOKEN`
 
-### Usage
+Usage:
 
-> **Warning**: By default, the functions `jist-region` and
-> `jist-buffer` create **anonymous** gists. To create gists with
-> you configured account use `jist-auth-region` and
-> `jist-auth-buffer`.
+> **Warning**: By default, the functions `jist-region` and `jist-buffer`
+> create **anonymous** gists. To create gists with you configured account use
+> `jist-auth-region` and `jist-auth-buffer`.
 
 + Create a gist from an active region:
 
@@ -55,7 +53,7 @@ the following methods:
 You can set the variable `jist-enable-default-authorized` to non nil to
 always use your configured account when creating gists.
 
-### Tips
+Tips:
 
 + In the current gist API the values of `gist_pull_url` and
   `git_push_url` use the HTTP protocol, but it's inconvenient to
@@ -65,20 +63,19 @@ always use your configured account when creating gists.
         [url "git@gist.github.com:/"]
             pushInsteadOf = "https://gist.github.com/"
 
-### TODO
+TODO:
 
 + [ ] Add pagination support with rfc5988 link headers. See:
   - [Github api pagination](https://developer.github.com/v3/#pagination)
   - [Traversing with Pagination](https://developer.github.com/guides/traversing-with-pagination/).
   - [rfc5988](https://www.rfc-editor.org/rfc/rfc5988.txt)
 
-### Related Projects
+Related Projects:
 
 + [gist.el](https://github.com/defunkt/gist.el)
 + [yagist.el](https://github.com/mhayashi1120/yagist.el)
 
-[gist]: https://gist.github.com/
-[magit]: https://magit.github.io/
+[Gist]: https://gist.github.com/
 
 ### Function Documentation
 
@@ -121,7 +118,11 @@ Show a gist with ID in a browser.
 
 #### `(jist-star-gist ID)`
 
-Star a gist ID.
+Star a gist identified by ID.
+
+#### `(jist-fork-gist ID)`
+
+Fork a gist identified by ID.
 
 #### `(jist-unstar-gist ID)`
 
@@ -129,7 +130,7 @@ Unstar a gist ID.
 
 #### `(jist-clone-gist ID)`
 
-Close gist ID.
+Clone gist identified by ID.
 
 #### `(jist-refetch-gists)`
 

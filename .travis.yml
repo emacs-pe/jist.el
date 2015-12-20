@@ -1,13 +1,17 @@
 language: emacs-lisp
+sudo: false
 env:
-  - EMACS=emacs24
-  - EMACS=emacs-snapshot
+  - EMACS_VERSION=24.3
+  - EMACS_VERSION=24.4
+  - EMACS_VERSION=24.5
+  - EMACS_VERSION=snapshot
+matrix:
+  allow_failures:
+    - env: EMACS_VERSION=snapshot
 before_install:
-  - sudo add-apt-repository -y ppa:cassou/emacs
-  - sudo add-apt-repository -y ppa:ubuntu-elisp/ppa
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -yy ${EMACS}-nox
-  - curl -fsSkL https://raw.github.com/cask/cask/master/go | python
-  - export PATH="${HOME}/.cask/bin:$PATH"
+  - export PATH="$HOME/bin:$PATH"
+  - curl -fsSOL https://github.com/flycheck/emacs-travis/raw/master/emacs-travis.mk
+  - make -f emacs-travis.mk install_emacs
+  - make -f emacs-travis.mk install_cask
 script:
   - make compile

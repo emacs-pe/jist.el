@@ -1,6 +1,6 @@
 CASK  ?= cask
 WGET  ?= wget
-EMACS ?= emacs
+EMACS  = emacs
 
 EMACSFLAGS =
 EMACSBATCH = $(EMACS) --batch -Q $(EMACSFLAGS)
@@ -32,6 +32,6 @@ README.md: make-readme-markdown.el $(SRCS)
 	$(CASK) exec $(EMACSBATCH) --script $< <$(SRCS) >$@ 2>/dev/null
 
 make-readme-markdown.el:
-	$(WGET) -q -O $@ "https://raw.github.com/mgalgs/make-readme-markdown/master/make-readme-markdown.el"
+	$(WGET) -q -O $@ "https://github.com/mgalgs/make-readme-markdown/raw/master/make-readme-markdown.el"
 
 .INTERMEDIATE: make-readme-markdown.el
