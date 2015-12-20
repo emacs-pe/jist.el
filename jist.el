@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24.3") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0") (pkg-info "0.4"))
+;; Package-Requires: ((emacs "24.4") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0") (pkg-info "0.4"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -103,20 +103,13 @@
 
 (eval-when-compile
   (require 'cl-lib)
-  (require 'subr-x nil 'no-error)
+  (require 'subr-x)
   (require 'let-alist))
 
 (require 'json)
 (require 'magit)
 (require 'request)
 (require 'url-expand)
-
-(eval-and-compile
-  (unless (featurep 'subr-x)
-    ;; `subr-x' function for Emacs 24.3 and below
-    (defsubst string-empty-p (string)
-      "Check whether STRING is empty."
-      (string= string ""))))
 
 (defgroup jist nil
   "Another Gist integration."
@@ -246,7 +239,7 @@
       (erase-buffer)
       (and (stringp data) (insert data))
       (let ((raw-header (request-response--raw-header response)))
-        (unless (string-empty-p raw-header)
+        (unless (or (null raw-header) (string-empty-p raw-header))
           (insert "\n" raw-header))))))
 
 (defun jist--create-gist-data (files &optional description public)
