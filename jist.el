@@ -343,11 +343,7 @@ When PUBLIC is not nil creates a public gist."
       (jist-github-request (format "/gists/%s" id)
                            :type "DELETE"
                            :authorized t
-                           :status-code '((204 . (lambda (&rest _) (message "Gist deleted"))))
-                           :success nil
-                           :error (cl-function
-                                   (lambda (&key error-thrown &allow-other-keys)
-                                     (message (error-message-string error-thrown))))))))
+                           :status-code '((204 . (lambda (&rest _) (message "Gist deleted"))))))))
 
 ;;;###autoload
 (defun jist-browse-gist (id)
@@ -362,11 +358,9 @@ When PUBLIC is not nil creates a public gist."
   (jist-github-request (format "/gists/%s/star" id)
                        :type "PUT"
                        :authorized t
-                       :status-code '((204 . (lambda (&rest _) (message "Gist starred"))))
                        :headers '(("Content-Length" . "0"))
-                       :error (cl-function
-                               (lambda (&key error-thrown &allow-other-keys)
-                                 (message (error-message-string error-thrown))))))
+                       :status-code '((204 . (lambda (&rest _) (message "Gist starred"))))))
+
 ;;;###autoload
 (defun jist-fork-gist (id)
   "Fork a gist identified by ID."
@@ -374,10 +368,7 @@ When PUBLIC is not nil creates a public gist."
   (jist-github-request (format "/gists/%s/forks" id)
                        :type "POST"
                        :authorized t
-                       :status-code '((201 . (lambda (&rest _) (message "Gist forked"))))
-                       :error (cl-function
-                               (lambda (&key error-thrown &allow-other-keys)
-                                 (message (error-message-string error-thrown))))))
+                       :status-code '((201 . (lambda (&rest _) (message "Gist forked"))))))
 
 ;;;###autoload
 (defun jist-unstar-gist (id)
@@ -386,10 +377,7 @@ When PUBLIC is not nil creates a public gist."
   (jist-github-request (format "/gists/%s/star" id)
                        :type "DELETE"
                        :authorized t
-                       :status-code '((204 . (lambda (&rest _) (message "Gist unstarred"))))
-                       :error (cl-function
-                               (lambda (&key error-thrown &allow-other-keys)
-                                 (message (error-message-string error-thrown))))))
+                       :status-code '((204 . (lambda (&rest _) (message "Gist unstarred"))))))
 
 ;;;###autoload
 (defun jist-clone-gist (id)
