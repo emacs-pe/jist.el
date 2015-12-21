@@ -55,16 +55,21 @@ always use your configured account when creating gists.
 
 Tips:
 
-+ In the current gist API the values of `gist_pull_url` and
-  `git_push_url` use the HTTP protocol, but it's inconvenient to
-  use the HTTP for pushes. To use the SSH protocol for pushes in
-  cloned gists you need to add the following to your git-config(1)
++ In the current gist API the values of `gist_pull_url` and `git_push_url`
+  use the HTTP protocol, but it's inconvenient to use the HTTP for pushes. To
+  use the SSH protocol for pushes in cloned gists you need to add the
+  following to your git-config(1):
 
         [url "git@gist.github.com:/"]
             pushInsteadOf = "https://gist.github.com/"
 
 TODO:
 
++ [ ] List Gist forks.
++ [ ] Edit a single gist.
++ [ ] mark/unmark gists.
++ [ ] Allow gist edition with `org-mode`.
++ [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
 + [ ] Add pagination support with rfc5988 link headers. See:
   - [Github api pagination](https://developer.github.com/v3/#pagination)
   - [Traversing with Pagination](https://developer.github.com/guides/traversing-with-pagination/).
@@ -110,11 +115,11 @@ Create an authorized and public gist from the contents of the current buffer.
 
 #### `(jist-delete-gist ID)`
 
-Delete gist with ID.
+Delete gist identified by ID.
 
 #### `(jist-browse-gist ID)`
 
-Show a gist with ID in a browser.
+Show a gist identified by ID in a browser using ‘browse-url’.
 
 #### `(jist-star-gist ID)`
 
@@ -126,7 +131,7 @@ Fork a gist identified by ID.
 
 #### `(jist-unstar-gist ID)`
 
-Unstar a gist ID.
+Unstar a gist identified by ID.
 
 #### `(jist-clone-gist ID)`
 
