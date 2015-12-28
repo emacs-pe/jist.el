@@ -71,7 +71,6 @@ always use your configured account when creating gists.
 ### TODO:
 
 + [ ] List Gist forks.
-+ [ ] mark/unmark gists.
 + [ ] Allow gist edition with `org-mode`.
 + [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
 + [ ] Add pagination support with rfc5988 link headers. See:

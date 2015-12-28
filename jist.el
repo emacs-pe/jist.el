@@ -92,7 +92,6 @@
 ;; ### TODO:
 ;;
 ;; + [ ] List Gist forks.
-;; + [ ] mark/unmark gists.
 ;; + [ ] Allow gist edition with `org-mode'.
 ;; + [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
 ;; + [ ] Add pagination support with rfc5988 link headers. See:
@@ -473,6 +472,43 @@ When PUBLIC is not nil creates a public gist."
                                          (let-alist data
                                            (magit-clone .git_pull_url directory)))))))))
 
+(defun jist--menu-mark-delete (&optional _num)
+  "Mark a gist for deletion and move to the next line."
+  (interactive "p")
+  (tabulated-list-put-tag "D" t))
+
+(defun jist--menu-mark-clone (&optional _num)
+  "Mark a gist for clone and move to the next line."
+  (interactive "p")
+  (tabulated-list-put-tag "C" t))
+
+(defun jist--menu-mark-unmark (&optional _num)
+  "Clear any mark on a gist and move to the next line."
+  (interactive "p")
+  (tabulated-list-put-tag " " t))
+
+(defun jist--menu-execute ()
+  "Perform marked gist list actions."
+  (interactive)
+  (unless (derived-mode-p 'jist-gist-list-mode)
+    (error "The current buffer is not in Jist list mode"))
+  (let (clone-list delete-list cmd gist-id)
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (setq cmd (char-after))
+        (unless (eq cmd ?\s)
+          (setq gist-id (tabulated-list-get-id))
+          (cond ((eq cmd ?D)
+                 (push gist-id delete-list))
+                ((eq cmd ?C)
+                 (push gist-id clone-list))))
+        (forward-line)))
+    (unless (or delete-list clone-list)
+      (user-error "No operations specified"))
+    (mapc 'jist-clone-gist clone-list)
+    (mapc 'jist-delete-gist delete-list)))
+
 (defun jist--generate-table-entries (buffer)
   "Generate tabulated mode entries of a BUFFER."
   (mapcar #'jist--generate-table-entry (jist-gists buffer)))
@@ -495,12 +531,16 @@ Where ITEM is a cons cell `(id . jist-gist)`."
 (defvar jist-gist-list-mode-map
   (let ((map (make-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
-    (define-key map (kbd "O") #'jist-browse-gist)
-    (define-key map (kbd "C") #'jist-clone-gist)
-    (define-key map (kbd "S") #'jist-star-gist)
-    (define-key map (kbd "U") #'jist-unstar-gist)
-    (define-key map (kbd "D") #'jist-delete-gist)
-    (define-key map (kbd "F") #'jist-fork-gist)
+    (define-key map "c" 'jist--menu-mark-clone)
+    (define-key map "d" 'jist--menu-mark-delete)
+    (define-key map "u" 'jist--menu-mark-unmark)
+    (define-key map "x" 'jist--menu-execute)
+    (define-key map "O" 'jist-browse-gist)
+    (define-key map "C" 'jist-clone-gist)
+    (define-key map "S" 'jist-star-gist)
+    (define-key map "U" 'jist-unstar-gist)
+    (define-key map "D" 'jist-delete-gist)
+    (define-key map "F" 'jist-fork-gist)
     map)
   "Keymap for jist-gist-list-mode.")
 
