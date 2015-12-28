@@ -1,5 +1,5 @@
 ## jist.el
-*Manage gists from Emacs      -*- lexical-binding: t; -*-*
+*Gist integration                     -*- lexical-binding: t; -*-*
 
 ---
 [![License GPLv3](https://img.shields.io/badge/license-GPL_v3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
@@ -8,7 +8,7 @@
 
 Yet another [Gist][] client for Emacs.
 
-Features:
+### Features:
 
 + Allows to create gists.
 + Allows to delete/clone/star/unstar a gist.
@@ -16,7 +16,7 @@ Features:
 + List public gists.
 + List public gists from another github user.
 
-Configuration:
+### Configuration:
 
 To create anonymous gists is not necessary any configuration, but if you want
 to create gists with your github account you need to obtain a `oauth-token`
@@ -26,7 +26,7 @@ through any of the following methods:
 + Add `(setq jist-github-token "TOKEN")` to your `init.el`.
 + Add `oauth-token` to your `~/.gitconfig`: `git config --global github.oauth-token MYTOKEN`
 
-Usage:
+### Usage:
 
 > **Warning**: By default, the functions `jist-region` and `jist-buffer`
 > create **anonymous** gists. To create gists with you configured account use
@@ -53,7 +53,7 @@ Usage:
 You can set the variable `jist-enable-default-authorized` to non nil to
 always use your configured account when creating gists.
 
-Tips:
+#### Tips:
 
 + In the current gist API the values of `gist_pull_url` and `git_push_url`
   use the HTTP protocol, but it's inconvenient to use the HTTP for pushes. To
@@ -63,10 +63,14 @@ Tips:
         [url "git@gist.github.com:/"]
             pushInsteadOf = "https://gist.github.com/"
 
-TODO:
+#### Related Projects:
+
++ [gist.el](https://github.com/defunkt/gist.el)
++ [yagist.el](https://github.com/mhayashi1120/yagist.el)
+
+### TODO:
 
 + [ ] List Gist forks.
-+ [ ] Edit a single gist.
 + [ ] mark/unmark gists.
 + [ ] Allow gist edition with `org-mode`.
 + [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
@@ -75,15 +79,22 @@ TODO:
   - [Traversing with Pagination](https://developer.github.com/guides/traversing-with-pagination/).
   - [rfc5988](https://www.rfc-editor.org/rfc/rfc5988.txt)
 
-Related Projects:
-
-+ [gist.el](https://github.com/defunkt/gist.el)
-+ [yagist.el](https://github.com/mhayashi1120/yagist.el)
-
 [Gist]: https://gist.github.com/
 
 ### Function Documentation
 
+
+#### `(jist-dired-auth ARG)`
+
+Create a authenticated gist from marked files(s) in dired.
+
+With prefix ARG create a gist from file at point.
+
+#### `(jist-dired-auth-public ARG)`
+
+Create a public gist from marked files(s) in dired.
+
+With prefix ARG create a gist from file at point.
 
 #### `(jist-auth-region)`
 

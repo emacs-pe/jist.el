@@ -1,4 +1,4 @@
-;;; jist.el --- Manage gists from Emacs      -*- lexical-binding: t; -*-
+;;; jist.el --- Gist integration                     -*- lexical-binding: t; -*-
 
 ;; Copyright © 2014 Mario Rodas <marsam@users.noreply.github.com>
 
@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24.4") (pkg-info "0.4") (dash "2.12.1") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
+;; Package-Requires: ((emacs "24.4") (pkg-info "0.4") (dash "2.12.0") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -29,7 +29,7 @@
 ;;
 ;; Yet another [Gist][] client for Emacs.
 ;;
-;; Features:
+;; ### Features:
 ;;
 ;; + Allows to create gists.
 ;; + Allows to delete/clone/star/unstar a gist.
@@ -37,7 +37,7 @@
 ;; + List public gists.
 ;; + List public gists from another github user.
 ;;
-;; Configuration:
+;; ### Configuration:
 ;;
 ;; To create anonymous gists is not necessary any configuration, but if you want
 ;; to create gists with your github account you need to obtain a `oauth-token`
@@ -47,7 +47,7 @@
 ;; + Add `(setq jist-github-token "TOKEN")` to your `init.el`.
 ;; + Add `oauth-token` to your `~/.gitconfig`: `git config --global github.oauth-token MYTOKEN`
 ;;
-;; Usage:
+;; ### Usage:
 ;;
 ;; > **Warning**: By default, the functions `jist-region' and `jist-buffer'
 ;; > create **anonymous** gists. To create gists with you configured account use
@@ -74,7 +74,7 @@
 ;; You can set the variable `jist-enable-default-authorized' to non nil to
 ;; always use your configured account when creating gists.
 ;;
-;; Tips:
+;; #### Tips:
 ;;
 ;; + In the current gist API the values of `gist_pull_url' and `git_push_url'
 ;;   use the HTTP protocol, but it's inconvenient to use the HTTP for pushes. To
@@ -84,10 +84,14 @@
 ;;         [url "git@gist.github.com:/"]
 ;;             pushInsteadOf = "https://gist.github.com/"
 ;;
-;; TODO:
+;; #### Related Projects:
+;;
+;; + [gist.el](https://github.com/defunkt/gist.el)
+;; + [yagist.el](https://github.com/mhayashi1120/yagist.el)
+;;
+;; ### TODO:
 ;;
 ;; + [ ] List Gist forks.
-;; + [ ] Edit a single gist.
 ;; + [ ] mark/unmark gists.
 ;; + [ ] Allow gist edition with `org-mode'.
 ;; + [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
@@ -95,11 +99,6 @@
 ;;   - [Github api pagination](https://developer.github.com/v3/#pagination)
 ;;   - [Traversing with Pagination](https://developer.github.com/guides/traversing-with-pagination/).
 ;;   - [rfc5988](https://www.rfc-editor.org/rfc/rfc5988.txt)
-;;
-;; Related Projects:
-;;
-;; + [gist.el](https://github.com/defunkt/gist.el)
-;; + [yagist.el](https://github.com/mhayashi1120/yagist.el)
 ;;
 ;; [Gist]: https://gist.github.com/
 
@@ -157,6 +156,9 @@
 (defconst jist-github-api-baseurl "https://api.github.com"
   "Base url for the github api.")
 
+(defvar jist-gist-after-fork-hook nil)
+(defvar jist-gist-after-create-hook nil)
+
 (defvar jist-buffer-name "*Jist*"
   "Buffer name used for api responses.")
 
@@ -200,7 +202,7 @@
   "Return the configured github token."
   (or jist-github-token
       (magit-get "github" "oauth-token")
-      (error "You need to generate a personal access token.  https://github.com/settings/applications")))
+      (user-error "You need to generate a personal access token.  https://github.com/settings/applications")))
 
 ;; XXX: https://developer.github.com/v3/#current-version
 (defconst jist-default-headers
@@ -212,7 +214,6 @@
                                (type "GET")
                                (params nil)
                                (data nil)
-                               (files nil)
                                (parser 'buffer-string)
                                (error 'jist-default-callback)
                                (success 'jist-default-callback)
@@ -236,7 +237,6 @@
            :error error
            :timeout timeout
            :status-code status-code
-           :files files
            :sync sync))
 
 (cl-defun jist-default-callback (&key data response error-thrown &allow-other-keys)
@@ -249,16 +249,19 @@
         (unless (or (null raw-header) (string-empty-p raw-header))
           (insert "\n" raw-header))))))
 
-(defun jist--create-gist-data (files &optional description public)
+(cl-defun jist--create-gist-data (&key
+                                  files
+                                  public
+                                  (description (read-string "Description: ")))
   "Create a json for payload for gist from FILES alist.
 
 DESCRIPTION and PUBLIC."
   (let ((public (if public t json-false))
         (files (cl-loop for (name . content) in files
                         collect `(,name . (("content" . ,content))))))
-    (json-encode `(("description" . ,(or description ""))
-                   ("files" . ,files)
-                   ("public" . ,public)))))
+    (json-encode `(("files" . ,files)
+                   ("public" . ,public)
+                   ("description" . ,description)))))
 
 (defun jist--file-name (&optional buffer)
   "Create a gist name based in BUFFER name."
@@ -273,6 +276,68 @@ DESCRIPTION and PUBLIC."
     (list (or (and (not current-prefix-arg) jist-id)
               (completing-read "Gist id: " jist-gists nil nil nil 'jist-id-history jist-id)))))
 
+(defun jist--kill-gist-html-url (data)
+  "Given a Gist DATA api response, kill its html url."
+  (let-alist data
+    (kill-new (message "%s" .html_url))))
+
+(defun jist--collect-file (file)
+  "Return a cons cell \(file-name . contents\) from FILE."
+  (let* ((visiting (find-buffer-visiting file))
+         (buffer (or visiting (find-file-noselect file))))
+    (with-current-buffer buffer
+      (prog1
+          (cons (file-name-nondirectory file) (buffer-substring-no-properties (point-min) (point-max)))
+        (unless visiting (kill-buffer buffer))))))
+
+(cl-defun jist--create-internal (data
+                                 &key
+                                 (authorized nil))
+  "Internal gist creation."
+  (jist-github-request "/gists"
+                       :type "POST"
+                       :data data
+                       :parser #'json-read
+                       :authorized (or authorized jist-enable-default-authorized)
+                       :success (cl-function
+                                 (lambda (&key data &allow-other-keys)
+                                   (run-hook-with-args 'jist-gist-after-create-hook data)))))
+
+(add-hook 'jist-gist-after-create-hook #'jist--kill-gist-html-url)
+
+;;;###autoload
+(cl-defun jist-dired (arg
+                      &key
+                      (public nil)
+                      (authorized nil))
+  "Create a gist from marked files(s) in dired.
+
+With prefix ARG create a gist from file at point."
+  (interactive "P")
+  (let (files)
+    (if arg
+        (setq files (list (dired-get-filename)))
+      (setq files (dired-get-marked-files)))
+    (let ((data (jist--create-gist-data :files (mapcar #'jist--collect-file files)
+                                        :public public)))
+      (jist--create-internal data :authorized authorized))))
+
+;;;###autoload
+(defun jist-dired-auth (arg)
+  "Create a authenticated gist from marked files(s) in dired.
+
+With prefix ARG create a gist from file at point."
+  (interactive "P")
+  (jist-dired arg :authorized t))
+
+;;;###autoload
+(defun jist-dired-auth-public (arg)
+  "Create a public gist from marked files(s) in dired.
+
+With prefix ARG create a gist from file at point."
+  (interactive "P")
+  (jist-dired arg :authorized t :public t))
+
 ;;;###autoload
 (cl-defun jist-region (&key
                        (beg (and (use-region-p) (region-beginning)))
@@ -284,18 +349,9 @@ DESCRIPTION and PUBLIC."
 When PUBLIC is not nil creates a public gist."
   (interactive)
   (or (and beg end) (error "No region selected"))
-  (let* ((description (read-string "Description: "))
-         (files `((,(jist--file-name) . ,(buffer-substring-no-properties beg end))))
-         (data (jist--create-gist-data files description public)))
-    (jist-github-request "/gists"
-                         :type "POST"
-                         :data data
-                         :parser #'json-read
-                         :authorized (or authorized jist-enable-default-authorized)
-                         :success (cl-function
-                                   (lambda (&key data &allow-other-keys)
-                                     (let-alist data
-                                       (kill-new (message "%s" .html_url))))))))
+  (let* ((files `((,(jist--file-name) . ,(buffer-substring-no-properties beg end))))
+         (data (jist--create-gist-data :files files :public public)))
+    (jist--create-internal data :authorized authorized)))
 
 ;;;###autoload
 (defun jist-auth-region ()
@@ -343,10 +399,11 @@ When PUBLIC is not nil creates a public gist."
 (defun jist-delete-gist (id)
   "Delete gist identified by ID."
   (interactive (jist--read-gist-id))
-  (let* ((gist (assoc-default id jist-gists))
-         (desc (and gist (jist-gist-description gist))))
+  (let ((gist (assoc-default id jist-gists)))
     (when (or jist-disable-asking
-              (y-or-n-p (format "Do you really want to delete gist %s: \"%s\"? " id (or desc ""))))
+              (y-or-n-p (if gist
+                            (format "Do you really want to delete gist %s: \"%s\"? " id (jist-gist-description gist))
+                          (format "Do you really want to delete gist %s? " id))))
       (jist-github-request (format "/gists/%s" id)
                            :type "DELETE"
                            :authorized t
@@ -385,8 +442,9 @@ When PUBLIC is not nil creates a public gist."
                        :authorized t
                        :status-code '((201 . (cl-function
                                               (lambda (&key data &allow-other-keys)
-                                                (let-alist data
-                                                  (kill-new (message "%s" .html_url)))))))))
+                                                (run-hook-with-args 'jist-gist-after-fork-hook data)))))))
+
+(add-hook 'jist-gist-after-fork-hook #'jist--kill-gist-html-url)
 
 ;;;###autoload
 (defun jist-unstar-gist (id)
@@ -454,6 +512,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                ("public" 6 t)
                                ("description" 60 t)
                                ("http_url" 60 nil)])
+  (setq tabulated-list-padding 2)
   (add-hook 'tabulated-list-revert-hook #'jist-refetch-gists nil t)
   (tabulated-list-init-header))
 

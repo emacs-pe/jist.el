@@ -2,3 +2,4 @@
 *.elc
 .cask
 el2markdown.el
+make-readme-markdown.el
