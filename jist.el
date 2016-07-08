@@ -409,6 +409,20 @@ When PUBLIC is not nil creates a public gist."
                             :status-code '((204 . (lambda (&rest _) (message "Gist deleted"))))))))
 
 ;;;###autoload
+(defun jist-print-gist (id)
+  "Show a gist identified by ID and put into `kill-ring'."
+  (interactive (jist--read-gist-id))
+  (-if-let (gist (assoc-default id jist-gists))
+      (kill-new (message (jist-gist-html-url gist)))
+    (jist--github-request (format "/gists/%s" id)
+                          :type "GET"
+                          :parser #'json-read
+                          :success (cl-function
+                                    (lambda (&key data &allow-other-keys)
+                                      (let-alist data
+                                        (kill-new (message .html_url))))))))
+
+;;;###autoload
 (defun jist-browse-gist (id)
   "Show a gist identified by ID in a browser using `browse-url'."
   (interactive (jist--read-gist-id))
@@ -537,6 +551,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
     (define-key map "x" 'jist--menu-execute)
     (define-key map "f" 'jist-fork-gist)
     (define-key map "c" 'jist-clone-gist)
+    (define-key map "y" 'jist-print-gist)
     (define-key map "b" 'jist-browse-gist)
     (define-key map "k" 'jist-delete-gist)
     (define-key map "*" 'jist-star-gist)
