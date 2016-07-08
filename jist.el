@@ -50,8 +50,8 @@
 ;; ### Usage:
 ;;
 ;; > **Warning**: By default, the functions `jist-region' and `jist-buffer'
-;; > create **anonymous** gists. To create gists with you configured account use
-;; > `jist-auth-region' and `jist-auth-buffer'.
+;; > create **anonymous** gists.  To create gists with you configured account
+;; > use `jist-auth-region' and `jist-auth-buffer'.
 ;;
 ;; + Create a gist from an active region:
 ;;
@@ -77,8 +77,8 @@
 ;; #### Tips:
 ;;
 ;; + In the current gist API the values of `gist_pull_url' and `git_push_url'
-;;   use the HTTP protocol, but it's inconvenient to use the HTTP for pushes. To
-;;   use the SSH protocol for pushes in cloned gists you need to add the
+;;   use the HTTP protocol, but it's inconvenient to use the HTTP for pushes.
+;;   To use the SSH protocol for pushes in cloned gists you need to add the
 ;;   following to your git-config(1):
 ;;
 ;;         [url "git@gist.github.com:/"]
@@ -93,8 +93,8 @@
 ;;
 ;; + [ ] List Gist forks.
 ;; + [ ] Allow gist edition with `org-mode'.
-;; + [ ] Handle nicely 422 errors. See: https://developer.github.com/v3/#client-errors
-;; + [ ] Add pagination support with rfc5988 link headers. See:
+;; + [ ] Handle nicely 422 errors.  See: https://developer.github.com/v3/#client-errors
+;; + [ ] Add pagination support with rfc5988 link headers.  See:
 ;;   - [Github api pagination](https://developer.github.com/v3/#pagination)
 ;;   - [Traversing with Pagination](https://developer.github.com/guides/traversing-with-pagination/).
 ;;   - [rfc5988](https://www.rfc-editor.org/rfc/rfc5988.txt)
