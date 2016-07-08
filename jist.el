@@ -190,19 +190,18 @@
 (defvar-local jist-gists-already-fetched nil)
 (put 'jist-gists-already-fetched 'permanent-local t)
 
-(cl-defstruct (jist-gist (:constructor jist-gist--create))
-  "A structure holding all the information of a gist."
-  id public description html-url git-pull-url -raw)
+(cl-defstruct (jist-gist (:constructor jist-gist-new))
+  "A structure holding the information of a gist."
+  id public description html-url git-pull-url)
 
 (defun jist--gist-create (data)
   "Create a `jist-gist' struct from an api response DATA."
   (let-alist data
-    (jist-gist--create :id .id
-                       :public .public
-                       :description .description
-                       :html-url .html_url
-                       :git-pull-url .git_pull_url
-                       :-raw data)))
+    (jist-gist-new :id .id
+                   :public .public
+                   :description .description
+                   :html-url .html_url
+                   :git-pull-url .git_pull_url)))
 
 ;; http://developer.github.com/v3/oauth/
 (defun jist--oauth-token ()
@@ -286,7 +285,7 @@ DESCRIPTION and PUBLIC."
 (defun jist--kill-gist-html-url (data)
   "Given a Gist DATA api response, kill its html url."
   (let-alist data
-    (kill-new (message "%s" .html_url))))
+    (kill-new (message .html_url))))
 
 (defun jist--collect-file (file)
   "Return a cons cell \(file-name . contents\) from FILE."
@@ -590,6 +589,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                 :user jist-gists-user
                 :public jist-gists-public
                 :starred jist-gists-starred)))
+
 ;;;###autoload
 (defun jist-fetch-next-page ()
   "Fetch the next page of the gists of a jist-list-mode buffer."
