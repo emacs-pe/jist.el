@@ -133,11 +133,13 @@
 (defcustom jist-enable-default-authorized nil
   "Enable gists creation with associated account."
   :type 'boolean
+  :safe #'booleanp
   :group 'jist)
 
 (defcustom jist-anonymous-name nil
   "Enable gists creation without using the buffer name."
   :type 'boolean
+  :safe #'booleanp
   :group 'jist)
 
 ;; We currently use per_page=100 (max value allowed), until we implement
@@ -145,11 +147,13 @@
 (defcustom jist-default-per-page 100
   "Default `per_page' argument used in list requests."
   :type 'integer
+  :safe #'integerp
   :group 'jist)
 
 (defcustom jist-disable-asking nil
   "Disable asking before destructive operations."
   :type 'boolean
+  :safe #'booleanp
   :group 'jist)
 
 (defconst jist-github-api-baseurl "https://api.github.com"
