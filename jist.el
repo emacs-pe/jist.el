@@ -529,20 +529,20 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                      (jist-gist-html-url gist)))))
 
 (defvar jist-gist-list-mode-map
-  (let ((map (make-keymap)))
+  (let ((map (make-sparse-keymap)))
     (set-keymap-parent map tabulated-list-mode-map)
-    (define-key map "c" 'jist--menu-mark-clone)
+    (define-key map "i" 'jist--menu-mark-clone)
     (define-key map "d" 'jist--menu-mark-delete)
     (define-key map "u" 'jist--menu-mark-unmark)
     (define-key map "x" 'jist--menu-execute)
-    (define-key map "O" 'jist-browse-gist)
-    (define-key map "C" 'jist-clone-gist)
-    (define-key map "S" 'jist-star-gist)
-    (define-key map "U" 'jist-unstar-gist)
-    (define-key map "D" 'jist-delete-gist)
-    (define-key map "F" 'jist-fork-gist)
+    (define-key map "f" 'jist-fork-gist)
+    (define-key map "c" 'jist-clone-gist)
+    (define-key map "b" 'jist-browse-gist)
+    (define-key map "k" 'jist-delete-gist)
+    (define-key map "*" 'jist-star-gist)
+    (define-key map "^" 'jist-unstar-gist)
     map)
-  "Keymap for jist-gist-list-mode.")
+  "Keymap for `jist-gist-list-mode' buffers.")
 
 (define-derived-mode jist-gist-list-mode tabulated-list-mode "Jist List"
   "List gists.
