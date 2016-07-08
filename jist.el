@@ -156,6 +156,12 @@
   :safe #'booleanp
   :group 'jist)
 
+(defcustom jist-use-descriptions nil
+  "Whether to use gist descriptions for completions."
+  :type 'boolean
+  :safe #'booleanp
+  :group 'jist)
+
 (defconst jist-github-api-baseurl "https://api.github.com"
   "Base url for the github api.")
 
@@ -276,11 +282,33 @@ DESCRIPTION and PUBLIC."
          (extension (file-name-extension filename t)))
     (if jist-anonymous-name (concat "gistfile" extension) filename)))
 
+;; TODO: Maybe download user gists in background
+(defun jist--jist-items ()
+  "Return gist from configured default user."
+  (or jist-gists
+      (-if-let (buffer (get-buffer jist-buffer-name))
+          (buffer-local-value 'jist-gists buffer)
+        (message "Not gist buffer found be sure to call `jist-list' first")
+        nil)))
+
+(defun jist--read-gist-description (items)
+  "Return an gist id from description from jist ITEMS."
+  (let* ((jists (mapcar 'cdr-safe items))
+         (description (completing-read "Gist description: " (mapcar 'jist-gist-description jists) nil t)))
+    (-if-let (jist (seq-find (lambda (e)
+                               (string= (jist-gist-description e) description))
+                             jists))
+        (jist-gist-id jist)
+      (user-error "Not found gist with description: \"%s\"" description))))
+
 (defun jist--read-gist-id ()
   "Read gist id."
   (let ((jist-id (and (derived-mode-p 'jist-gist-list-mode) (tabulated-list-get-id))))
     (list (or (and (not current-prefix-arg) jist-id)
-              (completing-read "Gist id: " jist-gists nil nil nil 'jist-id-history jist-id)))))
+              (let ((items (jist--jist-items)))
+                (if (and jist-use-descriptions (> (length items) 0) (> (prefix-numeric-value current-prefix-arg) 0))
+                    (jist--read-gist-description items)
+                  (completing-read "Gist id: " items nil nil nil 'jist-id-history jist-id)))))))
 
 (defun jist--kill-gist-html-url (data)
   "Given a Gist DATA api response, kill its html url."
