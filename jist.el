@@ -170,6 +170,10 @@
 
 (defvar jist-id-history nil)
 
+(defvar-local jist-page nil
+  "Current page number of the Gist API.")
+(put 'jist-page 'permanent-local t)
+
 (defvar-local jist-gists nil
   "An alist which holds items of the form `(id . jist-gist)`")
 (put 'jist-gists 'permanent-local t)
@@ -527,9 +531,9 @@ When PUBLIC is not nil creates a public gist."
     (mapc 'jist-clone-gist clone-list)
     (mapc 'jist-delete-gist delete-list)))
 
-(defun jist--generate-table-entries (buffer)
-  "Generate tabulated mode entries of a BUFFER."
-  (mapcar #'jist--generate-table-entry (jist-gists buffer)))
+(defun jist--generate-table-entries (items)
+  "Generate tabulated mode entries from jist ITEMS."
+  (mapcar #'jist--generate-table-entry items))
 
 (defun jist--item-from-response (data)
   "Given a api response DATA of a single gist return an tabulated-mode entry."
@@ -560,6 +564,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
     (define-key map "k" 'jist-delete-gist)
     (define-key map "*" 'jist-star-gist)
     (define-key map "^" 'jist-unstar-gist)
+    (define-key map "+" 'jist-fetch-next-page)
     map)
   "Keymap for `jist-gist-list-mode' buffers.")
 
@@ -585,6 +590,17 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                 :user jist-gists-user
                 :public jist-gists-public
                 :starred jist-gists-starred)))
+;;;###autoload
+(defun jist-fetch-next-page ()
+  "Fetch the next page of the gists of a jist-list-mode buffer."
+  (interactive)
+  (when (eq major-mode 'jist-gist-list-mode)
+    (setq jist-gists-already-fetched nil)
+    (jist-gists (current-buffer)
+                :user jist-gists-user
+                :public jist-gists-public
+                :starred jist-gists-starred
+                :page (1+ (or jist-page 1)))))
 
 (cl-defun jist-gists (buffer
                       &key
@@ -592,12 +608,10 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                       (public nil)
                       (starred nil)
                       (since nil)
-                      (page nil)
+                      (page jist-page)
                       (per-page jist-default-per-page))
   "Fetch a `jist-gists' list of gists."
-  (with-current-buffer buffer
-    (if jist-gists-already-fetched
-        jist-gists
+  (or (buffer-local-value 'jist-gists-already-fetched buffer)
       (let* ((authorized (not (or user public)))
              (endpoint (cond (user (format "/users/%s/gists" user))
                              (public "/gists/public")
@@ -615,13 +629,18 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                         (lambda (&key data &allow-other-keys)
                                           (message "jist request complete")
                                           (with-current-buffer buffer
-                                            (setq jist-gists-already-fetched t
-                                                  jist-gists (mapcar #'jist--item-from-response data)
-                                                  tabulated-list-entries (jist--generate-table-entries buffer))
-                                            (tabulated-list-print t)))))))))
+                                            (setq jist-page page
+                                                  jist-gists-already-fetched t)
+                                            (let ((gists (mapcar #'jist--item-from-response data)))
+                                              (setq jist-gists (if (null jist-page)
+                                                                   (setq jist-gists gists)
+                                                                 (append jist-gists gists))))
+                                            (setq tabulated-list-entries (jist--generate-table-entries jist-gists))
+                                            (tabulated-list-print t))))))))
 
 ;;;###autoload
 (cl-defun jist-list (&key
+                     (page nil)
                      (user nil)
                      (public nil)
                      (starred nil))
@@ -637,7 +656,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
       (setq jist-gists-user user
             jist-gists-public public
             jist-gists-starred starred)
-      (jist-gists (current-buffer) :user user :public public :starred starred)
+      (jist-gists (current-buffer) :user user :public public :starred starred :page page)
       (pop-to-buffer (current-buffer)))))
 
 ;;;###autoload
