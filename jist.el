@@ -520,6 +520,18 @@ When PUBLIC is not nil creates a public gist."
                                           (let-alist data
                                             (magit-clone .git_pull_url directory)))))))))
 
+;;;###autoload
+(defun jist-edit-description (id)
+  "Set description to a gist identified by ID."
+  (interactive (jist--read-gist-id))
+  (let* ((gist (assoc-default id (jist--jist-items)))
+         (description (read-string "Description: " (and gist (jist-gist-description gist)))))
+    (jist--github-request (format "/gists/%s" id)
+                          :type "PATCH"
+                          :authorized t
+                          :parser #'json-read
+                          :data (json-encode `(("description" . ,description))))))
+
 (defun jist--menu-mark-delete (&optional _num)
   "Mark a gist for deletion and move to the next line."
   (interactive "p")
@@ -588,6 +600,7 @@ Where ITEM is a cons cell `(id . jist-gist)`."
     (define-key map "y" 'jist-print-gist)
     (define-key map "b" 'jist-browse-gist)
     (define-key map "k" 'jist-delete-gist)
+    (define-key map "e" 'jist-edit-description)
     (define-key map "*" 'jist-star-gist)
     (define-key map "^" 'jist-unstar-gist)
     (define-key map "+" 'jist-fetch-next-page)
