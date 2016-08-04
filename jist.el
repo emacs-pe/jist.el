@@ -292,22 +292,22 @@ DESCRIPTION and PUBLIC."
 
 (defun jist--read-gist-description (items)
   "Return an gist id from description from jist ITEMS."
-  (let* ((jists (mapcar 'cdr-safe items))
-         (description (completing-read "Gist description: " (mapcar 'jist-gist-description jists) nil t)))
-    (-if-let (jist (seq-find (lambda (e)
-                               (string= (jist-gist-description e) description))
-                             jists))
-        (jist-gist-id jist)
+  (let* ((gists (mapcar 'cdr-safe items))
+         (description (completing-read "Gist description: " (mapcar 'jist-gist-description gists) nil t)))
+    (-if-let (gist (seq-find (lambda (g)
+                               (string= (jist-gist-description g) description))
+                             gists))
+        (jist-gist-id gist)
       (user-error "Not found gist with description: \"%s\"" description))))
 
 (defun jist--read-gist-id ()
   "Read gist id."
-  (let ((jist-id (and (derived-mode-p 'jist-gist-list-mode) (tabulated-list-get-id))))
-    (list (or (and (not current-prefix-arg) jist-id)
+  (let ((gist-id (and (derived-mode-p 'jist-gist-list-mode) (tabulated-list-get-id))))
+    (list (or (and (not current-prefix-arg) gist-id)
               (let ((items (jist--jist-items)))
                 (if (and jist-use-descriptions (> (length items) 0) (> (prefix-numeric-value current-prefix-arg) 0))
                     (jist--read-gist-description items)
-                  (completing-read "Gist id: " items nil nil nil 'jist-id-history jist-id)))))))
+                  (completing-read "Gist id: " items nil nil nil 'jist-id-history gist-id)))))))
 
 (defun jist--kill-gist-html-url (data)
   "Given a Gist DATA api response, kill its html url."
