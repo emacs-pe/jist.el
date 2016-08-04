@@ -433,7 +433,7 @@ When PUBLIC is not nil creates a public gist."
 (defun jist-delete-gist (id)
   "Delete gist identified by ID."
   (interactive (jist--read-gist-id))
-  (let ((gist (assoc-default id jist-gists)))
+  (let ((gist (assoc-default id (jist--jist-items))))
     (when (or jist-disable-asking
               (y-or-n-p (if gist
                             (format "Do you really want to delete gist %s: \"%s\"? " id (jist-gist-description gist))
@@ -447,7 +447,7 @@ When PUBLIC is not nil creates a public gist."
 (defun jist-print-gist (id)
   "Show a gist identified by ID and put into `kill-ring'."
   (interactive (jist--read-gist-id))
-  (-if-let (gist (assoc-default id jist-gists))
+  (-if-let (gist (assoc-default id (jist--jist-items)))
       (kill-new (message (jist-gist-html-url gist)))
     (jist--github-request (format "/gists/%s" id)
                           :type "GET"
@@ -461,7 +461,7 @@ When PUBLIC is not nil creates a public gist."
 (defun jist-browse-gist (id)
   "Show a gist identified by ID in a browser using `browse-url'."
   (interactive (jist--read-gist-id))
-  (-if-let (gist (assoc-default id jist-gists))
+  (-if-let (gist (assoc-default id (jist--jist-items)))
       (browse-url (jist-gist-html-url gist))
     (jist--github-request (format "/gists/%s" id)
                           :type "GET"
@@ -510,7 +510,7 @@ When PUBLIC is not nil creates a public gist."
   (let ((directory (expand-file-name id jist-gist-directory)))
     (if (magit-git-repo-p directory)
         (magit-status-internal directory)
-      (-if-let (gist (assoc-default id jist-gists))
+      (-if-let (gist (assoc-default id (jist--jist-items)))
           (magit-clone (jist-gist-git-pull-url gist) directory)
         (jist--github-request (format "/gists/%s" id)
                               :type "GET"
