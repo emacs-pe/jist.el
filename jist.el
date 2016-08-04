@@ -243,7 +243,6 @@
            :data data
            :params params
            :headers headers
-           :data data
            :parser parser
            :success success
            :error error
@@ -288,7 +287,7 @@ DESCRIPTION and PUBLIC."
   (or jist-gists
       (-if-let (buffer (get-buffer jist-buffer-name))
           (buffer-local-value 'jist-gists buffer)
-        (message "Not gist buffer found be sure to call `jist-list' first")
+        (message "Not gist buffer found, be sure to call `jist-list' first")
         nil)))
 
 (defun jist--read-gist-description (items)
@@ -660,9 +659,9 @@ Where ITEM is a cons cell `(id . jist-gist)`."
                                             (setq jist-page page
                                                   jist-gists-already-fetched t)
                                             (let ((gists (mapcar #'jist--item-from-response data)))
-                                              (setq jist-gists (if (null jist-page)
-                                                                   (setq jist-gists gists)
-                                                                 (append jist-gists gists))))
+                                              (setq jist-gists (if jist-page
+                                                                   (append jist-gists gists)
+                                                                 gists)))
                                             (setq tabulated-list-entries (jist--generate-table-entries jist-gists))
                                             (tabulated-list-print t))))))))
 
