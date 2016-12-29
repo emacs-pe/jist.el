@@ -322,14 +322,14 @@ DESCRIPTION and PUBLIC."
   (let-alist data
     (kill-new (message .html_url))))
 
-(defun jist--collect-file (file)
-  "Return a cons cell \(file-name . contents\) from FILE."
-  (let* ((visiting (find-buffer-visiting file))
-         (buffer (or visiting (find-file-noselect file))))
-    (with-current-buffer buffer
-      (prog1
-          (cons (file-name-nondirectory file) (buffer-substring-no-properties (point-min) (point-max)))
-        (unless visiting (kill-buffer buffer))))))
+(defun jist--collect-file (filename)
+  "Return a cons cell \(file-name . contents\) from FILENAME."
+  (let* ((visiting (find-buffer-visiting filename))
+         (buffer (or visiting (find-file-noselect filename))))
+    (unwind-protect
+        (with-current-buffer buffer
+          (cons (file-name-nondirectory filename) (buffer-substring-no-properties (point-min) (point-max))))
+      (or visiting (kill-buffer buffer)))))
 
 (cl-defun jist--create-internal (data
                                  &key
@@ -355,13 +355,9 @@ DESCRIPTION and PUBLIC."
 
 With prefix ARG create a gist from file at point."
   (interactive "P")
-  (let (files)
-    (if arg
-        (setq files (list (dired-get-filename)))
-      (setq files (dired-get-marked-files)))
-    (let ((data (jist--create-gist-data :files (mapcar #'jist--collect-file files)
-                                        :public public)))
-      (jist--create-internal data :authorized authorized))))
+  (let* ((files (dired-get-marked-files t arg))
+         (data (jist--create-gist-data :public public :files (mapcar #'jist--collect-file files))))
+    (jist--create-internal data :authorized authorized)))
 
 ;;;###autoload
 (defun jist-dired-auth (arg)
