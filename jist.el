@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24.4") (pkg-info "0.4") (dash "2.12.0") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
+;; Package-Requires: ((emacs "24.4") (dash "2.12.0") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -102,8 +102,6 @@
 ;; [Gist]: https://gist.github.com/
 
 ;;; Code:
-(declare-function pkg-info-version-info "pkg-info" (library))
-
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x)
@@ -165,6 +163,8 @@
 (defconst jist-github-api-baseurl "https://api.github.com"
   "Base url for the github api.")
 
+(defconst jist-version "0.0.1")
+
 (defvar jist-gist-after-fork-hook nil)
 (defvar jist-gist-after-create-hook nil)
 
@@ -219,7 +219,7 @@
 ;; XXX: https://developer.github.com/v3/#current-version
 (defconst jist-default-headers
   `(("Accept" . "application/vnd.github.v3+json")
-    ("User-Agent" . ,(format "jist.el/%s" (pkg-info-version-info 'jist)))))
+    ("User-Agent" . ,(format "jist.el/%s" jist-version))))
 
 (cl-defun jist--github-request (endpoint
                                 &key
