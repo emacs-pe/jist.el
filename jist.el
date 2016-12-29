@@ -6,7 +6,7 @@
 ;; URL: https://github.com/emacs-pe/jist.el
 ;; Keywords: convenience
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "24.4") (dash "2.12.0") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
+;; Package-Requires: ((emacs "24.4") (dash "2.12.0") (seq "1.11") (let-alist "1.0.4") (magit "2.1.0") (request "0.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
