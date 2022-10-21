@@ -1,5 +1,6 @@
+<a href="https://github.com/emacs-pe/jist.el"><img src="https://www.gnu.org/software/emacs/images/emacs.png" alt="Emacs Logo" width="80" height="80" align="right"></a>
 ## jist.el
-*Gist integration                     -*- lexical-binding: t; -*-*
+*Gist integration*
 
 ---
 [![License GPLv3](https://img.shields.io/badge/license-GPL_v3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.html)
@@ -80,19 +81,56 @@ always use your configured account when creating gists.
 
 [Gist]: https://gist.github.com/
 
-### Function Documentation
 
+
+### Customization Documentation
+
+#### `jist-github-token`
+
+Oauth bearer token to interact with the Github API.
+
+#### `jist-gist-directory`
+
+Directory where to the gists will be cloned.
+
+#### `jist-enable-default-authorized`
+
+Enable gists creation with associated account.
+
+#### `jist-anonymous-name`
+
+Enable gists creation without using the buffer name.
+
+#### `jist-default-per-page`
+
+Default `per_page` argument used in list requests.
+
+#### `jist-disable-asking`
+
+Disable asking before destructive operations.
+
+#### `jist-use-descriptions`
+
+Whether to use gist descriptions for completions.
+
+### Function and Macro Documentation
+
+#### `(jist-json-read &optional CODING-SYSTEM)`
+
+Call `json-read` with CODING-SYSTEM.
+
+#### `(jist-json-encode OBJECT &optional CODING-SYSTEM)`
+
+Return a JSON representation of OBJECT as a string with CODING-SYSTEM.
 
 #### `(jist-dired-auth ARG)`
 
 Create a authenticated gist from marked files(s) in dired.
-
 With prefix ARG create a gist from file at point.
 
 #### `(jist-dired-auth-public ARG)`
 
 Create a public gist from marked files(s) in dired.
-
 With prefix ARG create a gist from file at point.
 
 #### `(jist-auth-region)`
@@ -129,11 +167,11 @@ Delete gist identified by ID.
 
 #### `(jist-print-gist ID)`
 
-Show a gist identified by ID and put into ‘kill-ring’.
+Show a gist identified by ID and put into `kill-ring`.
 
 #### `(jist-browse-gist ID)`
 
-Show a gist identified by ID in a browser using ‘browse-url’.
+Show a gist identified by ID in a browser using `browse-url`.
 
 #### `(jist-star-gist ID)`
 
@@ -150,6 +188,10 @@ Unstar a gist identified by ID.
 #### `(jist-clone-gist ID)`
 
 Clone gist identified by ID.
+
+#### `(jist-edit-description ID)`
+
+Set description to a gist identified by ID.
 
 #### `(jist-refetch-gists)`
 
